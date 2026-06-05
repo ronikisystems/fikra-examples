@@ -1,4 +1,4 @@
-# Django Chatbot — Fikra API
+# Django Chatbot - Fikra API
 
 A minimal Django app with a chat interface powered by [Fikra API](https://fikraapi.co.ke). Drop it into an existing Django project or run it standalone.
 
