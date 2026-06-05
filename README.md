@@ -9,7 +9,7 @@ A minimal Django app with a chat interface powered by [Fikra API](https://fikraa
 - [Django](https://www.djangoproject.com/) 4.x+
 - [Fikra API](https://fikraapi.co.ke) - AI inference (OpenAI-compatible)
 - [Fikra Python Repo](https://github.com/ronikisystems/fikra-python)
-- Vanilla JS frontend — no build step required
+- Vanilla JS frontend - no build step required
 
 ---
 
