@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fikra API Chatbot Integration</title>
+    <style>
+        /* Minimalist vanilla CSS - no external dependencies required */
+        :root {
+            --bg: #FDFDFD;
+            --surface: #FFFFFF;
+            --border: #E8E8E8;
+            --text: #1A1A1A;
+            --accent: #FF4500;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            height: 90vh;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        .chat-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #FAFAFA;
+        }
+        .chat-header h2 { margin: 0; font-size: 1.1rem; }
+        .clear-btn {
+            background: none;
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            color: #6B6B6B;
+        }
+        .clear-btn:hover { color: var(--text); border-color: #CCC; }
+        .chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .bubble {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+        .bubble.user {
+            align-self: flex-end;
+            background-color: var(--text);
+            color: white;
+            border-bottom-right-radius: 2px;
+        }
+        .bubble.ai {
+            align-self: flex-start;
+            background-color: #F4F4F4;
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 2px;
+        }
+        .input-area {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+        }
+        .input-area input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            outline: none;
+            font-size: 0.95rem;
+        }
+        .input-area input:focus { border-color: var(--text); }
+        .input-area button {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+        .input-area button:hover { opacity: 0.9; }
+        .input-area button:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>Fikra Django Example</h2>
+            <button class="clear-btn" onclick="clearChat()">Clear Chat</button>
+        </div>
+        
+        <div class="chat-box" id="chat-box">
+            <!-- Render existing history from Django session on page load -->
+            {% for msg in history %}
+                <div class="bubble {{ msg.role|yesno:'ai,user'|default:'user' }}">
+                    {{ msg.content }}
+                </div>
+            {% empty %}
+                <div class="bubble ai">Hello! I am connected to Fikra API via Django. How can I help you?</div>
+            {% endfor %}
+        </div>
+
+        <div class="input-area">
+            {% csrf_token %}
+            <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off">
+            <button id="send-btn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        // Auto-scroll to bottom on load
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        chatInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        function appendBubble(role, text) {
+            const div = document.createElement('div');
+            div.className = `bubble ${role}`;
+            div.textContent = text;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return div;
+        }
+
+        async function sendMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            // UI Updates
+            chatInput.value = '';
+            chatInput.disabled = true;
+            sendBtn.disabled = true;
+            appendBubble('user', text);
+            
+            const loadingBubble = appendBubble('ai', 'Thinking...');
+
+            try {
+                const response = await fetch('/chat/send/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ message: text })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    loadingBubble.textContent = data.message;
+                } else {
+                    loadingBubble.textContent = `Error: ${data.error}`;
+                }
+            } catch (err) {
+                loadingBubble.textContent = 'Network error reaching Django server.';
+            } finally {
+                chatInput.disabled = false;
+                sendBtn.disabled = false;
+                chatInput.focus();
+            }
+        }
+
+        async function clearChat() {
+            try {
+                await fetch('/chat/clear/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrfToken }
+                });
+                chatBox.innerHTML = '<div class="bubble ai">Chat history cleared.</div>';
+            } catch (err) {
+                console.error("Failed to clear chat");
+            }
+        }
+    </script>
+</body>
+</html>
