@@ -47,6 +47,7 @@ export FIKRA_API_KEY=your_fikra_api_key
 python manage.py migrate
 python manage.py runserver
 
+```
 Open http://localhost:8000 in your browser to start chatting.
 
 # Adding to an existing Django project
