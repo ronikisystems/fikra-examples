@@ -29,7 +29,7 @@ def chat_page(request):
     # We filter out the system prompt so it doesn't show in the chat bubbles
     display_history = [msg for msg in request.session['chat_history'] if msg['role'] != 'system']
     
-    return render(request, 'chatbot/chat.html', {'history': display_history})
+    return render(request, 'chatbot.html', {'history': display_history})
 
 def chat_send(request):
     """Receives user message, calls Fikra API, and updates session history."""
