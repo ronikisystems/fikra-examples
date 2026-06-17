@@ -10,7 +10,6 @@ Depending on what you are trying to build, you might be looking for our other of
 
 * [**fikra-python**](https://github.com/ronikisystems/fikra-python)**:** The official Python SDK for interacting with Fikra API. Use this if you are building backend applications in Python.
 
-* [**fikra-api**](https://github.com/ronikisystems/fikra-api)**:** Core documentation and usage guides for the Fikra API platform.
 
 ## ⚡ Don't want to write code? (5-Minute Deploy)
 
